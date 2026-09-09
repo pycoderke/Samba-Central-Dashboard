@@ -1,0 +1,1 @@
+recursive-include samba_central_dashboard *.json *.py *.html *.js *.css *.txt
