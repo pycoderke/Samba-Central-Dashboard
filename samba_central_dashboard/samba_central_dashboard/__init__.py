@@ -1,0 +1,1 @@
+"""Samba Central Dashboard module."""

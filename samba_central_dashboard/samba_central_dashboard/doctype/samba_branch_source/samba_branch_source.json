@@ -1,0 +1,17 @@
+{
+ "doctype":"DocType","name":"Samba Branch Source","module":"Samba Central Dashboard","autoname":"field:branch_code","title_field":"branch_name","track_changes":1,
+ "field_order":["branch_code","branch_name","enabled","shared_secret","last_seen_at","last_database"],
+ "fields":[
+  {"fieldname":"branch_code","label":"Branch Code","fieldtype":"Data","reqd":1,"unique":1},
+  {"fieldname":"branch_name","label":"Branch Name","fieldtype":"Data","reqd":1},
+  {"fieldname":"enabled","label":"Enabled","fieldtype":"Check","default":"1"},
+  {"fieldname":"shared_secret","label":"Shared Secret","fieldtype":"Password","reqd":1},
+  {"fieldname":"last_seen_at","label":"Last Seen At","fieldtype":"Datetime","read_only":1},
+  {"fieldname":"last_database","label":"Last Database","fieldtype":"Data","read_only":1}
+ ],
+ "permissions":[
+  {"role":"System Manager","read":1,"write":1,"create":1,"delete":1,"report":1,"export":1},
+  {"role":"Sales Manager","read":1,"report":1,"export":1},
+  {"role":"Sales Admin","read":1,"write":1,"create":1,"report":1,"export":1}
+ ]
+}

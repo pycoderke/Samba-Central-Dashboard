@@ -1,0 +1,32 @@
+{
+ "doctype":"DocType","name":"Samba Metric Event","module":"Samba Central Dashboard","autoname":"field:event_key","title_field":"ticket_number","track_changes":0,
+ "field_order":["event_key","branch_source","branch_name","source_key","database_name","department","posting_date","posting_time","ticket_id","ticket_number","invoice_name","event_type","customer","waiter","cashier","payment_modes","total","discount","fingerprint","payload_hash","received_at"],
+ "fields":[
+  {"fieldname":"event_key","label":"Event Key","fieldtype":"Data","reqd":1,"unique":1},
+  {"fieldname":"branch_source","label":"Branch Source","fieldtype":"Link","options":"Samba Branch Source","reqd":1,"in_list_view":1},
+  {"fieldname":"branch_name","label":"Branch","fieldtype":"Data","reqd":1},
+  {"fieldname":"source_key","label":"Source Key","fieldtype":"Data","reqd":1},
+  {"fieldname":"database_name","label":"Database","fieldtype":"Data"},
+  {"fieldname":"department","label":"Department","fieldtype":"Data","in_list_view":1},
+  {"fieldname":"posting_date","label":"Date","fieldtype":"Date","reqd":1,"in_list_view":1},
+  {"fieldname":"posting_time","label":"Time","fieldtype":"Time"},
+  {"fieldname":"ticket_id","label":"Ticket ID","fieldtype":"Int","reqd":1},
+  {"fieldname":"ticket_number","label":"Ticket","fieldtype":"Data","in_list_view":1},
+  {"fieldname":"invoice_name","label":"Invoice","fieldtype":"Data"},
+  {"fieldname":"event_type","label":"Type","fieldtype":"Select","options":"Sale\nReturn\nGift\nWastage\nVoid","reqd":1},
+  {"fieldname":"customer","label":"Customer","fieldtype":"Data"},
+  {"fieldname":"waiter","label":"Ticket User / Waiter","fieldtype":"Data"},
+  {"fieldname":"cashier","label":"Cashier / Settled By","fieldtype":"Data"},
+  {"fieldname":"payment_modes","label":"Payment Modes","fieldtype":"Data"},
+  {"fieldname":"total","label":"Total","fieldtype":"Currency"},
+  {"fieldname":"discount","label":"Discount","fieldtype":"Currency"},
+  {"fieldname":"fingerprint","label":"Fingerprint","fieldtype":"Data","reqd":1},
+  {"fieldname":"payload_hash","label":"Payload Hash","fieldtype":"Data","reqd":1},
+  {"fieldname":"received_at","label":"Received At","fieldtype":"Datetime","read_only":1}
+ ],
+ "permissions":[
+  {"role":"System Manager","read":1,"report":1,"export":1},
+  {"role":"Sales Manager","read":1,"report":1,"export":1},
+  {"role":"Sales Admin","read":1,"report":1,"export":1}
+ ]
+}
