@@ -22,6 +22,110 @@ def _event_key(branch, event):
     return "SME-" + hashlib.sha256(value.encode()).hexdigest()
 
 
+def _supplier_expenses(from_date, to_date, company=None):
+    """Return submitted supplier payouts without counting unpaid invoices."""
+    common = {"docstatus": 1, "posting_date": ["between", [from_date, to_date]]}
+    if company:
+        common["company"] = company
+
+    supplier_names = set()
+    expenses = []
+    payment_filters = dict(common)
+    payment_filters.update({"payment_type": "Pay", "party_type": "Supplier"})
+    for row in frappe.get_all(
+        "Payment Entry",
+        filters=payment_filters,
+        fields=["name", "posting_date", "party", "party_name", "base_paid_amount"],
+        limit_page_length=10000,
+    ):
+        supplier_names.add(row.party)
+        expenses.append({
+            "date": row.posting_date,
+            "entry_no": row.name,
+            "payee": row.party_name or row.party,
+            "amount": float(row.base_paid_amount or 0),
+            "entry_type": "Payment Entry",
+            "status": "Paid",
+            "counted": 1,
+        })
+
+    journals = frappe.get_all(
+        "Journal Entry",
+        filters=common,
+        fields=["name", "posting_date"],
+        limit_page_length=10000,
+    )
+    journal_dates = {row.name: row.posting_date for row in journals}
+    if journal_dates:
+        account_rows = frappe.get_all(
+            "Journal Entry Account",
+            filters={
+                "parent": ["in", list(journal_dates)],
+                "party_type": "Supplier",
+                "debit": [">", 0],
+            },
+            fields=["parent", "party", "debit"],
+            limit_page_length=20000,
+        )
+        supplier_names.update(row.party for row in account_rows if row.party)
+        for row in account_rows:
+            expenses.append({
+                "date": journal_dates[row.parent],
+                "entry_no": row.parent,
+                "payee": row.party or "Supplier",
+                "amount": float(row.debit or 0),
+                "entry_type": "Journal Entry",
+                "status": "Paid",
+                "counted": 1,
+            })
+
+    invoice_filters = dict(common)
+    invoice_filters["outstanding_amount"] = [">", 0]
+    for row in frappe.get_all(
+        "Purchase Invoice",
+        filters=invoice_filters,
+        fields=["name", "posting_date", "supplier", "supplier_name", "outstanding_amount"],
+        limit_page_length=10000,
+    ):
+        expenses.append({
+            "date": row.posting_date,
+            "entry_no": row.name,
+            "payee": row.supplier_name or row.supplier,
+            "amount": float(row.outstanding_amount or 0),
+            "entry_type": "Purchase Invoice",
+            "status": "Unpaid",
+            "counted": 0,
+        })
+
+    if supplier_names:
+        labels = {
+            row.name: row.supplier_name
+            for row in frappe.get_all(
+                "Supplier",
+                filters={"name": ["in", list(supplier_names)]},
+                fields=["name", "supplier_name"],
+                limit_page_length=10000,
+            )
+        }
+        for row in expenses:
+            row["payee"] = labels.get(row["payee"], row["payee"])
+
+    expenses.sort(key=lambda row: (str(row["date"]), row["entry_no"]), reverse=True)
+    return {
+        "rows": expenses,
+        "total": sum(row["amount"] for row in expenses if row["counted"]),
+        "unpaid_total": sum(row["amount"] for row in expenses if not row["counted"]),
+    }
+
+
+@frappe.whitelist()
+def supplier_expenses(from_date=None, to_date=None, company=None):
+    require_dashboard_role()
+    if not from_date or not to_date:
+        frappe.throw(_("from_date and to_date are required"))
+    return _supplier_expenses(from_date, to_date, company)
+
+
 @frappe.whitelist(allow_guest=True, methods=["POST"])
 def ingest():
     raw = frappe.request.get_data() or b""
@@ -122,8 +226,11 @@ def dashboard_data(filters=None):
         label = {"Return":"returns", "Gift":"gifts", "Wastage":"wastage", "Void":"voids"}.get(row.event_type)
         if label:
             item[label] += 1
+    expenses = _supplier_expenses(filters.get("from_date"), filters.get("to_date"), filters.get("company"))
     return {
         "rows": rows[:2000],
+        "expenses": expenses["rows"][:2000],
+        "unpaid_expenses": expenses["unpaid_total"],
         "departments": sorted(grouped.values(), key=lambda row: (row["branch"], row["department"])),
         "summary": {
             "tickets": len(rows), "sales": sum(float(r.total or 0) for r in rows if r.event_type in ("Sale", "Return")),
@@ -132,6 +239,7 @@ def dashboard_data(filters=None):
             "gifts": sum(1 for r in rows if r.event_type == "Gift"),
             "wastage": sum(1 for r in rows if r.event_type == "Wastage"),
             "voids": sum(1 for r in rows if r.event_type == "Void"),
+            "expenses": expenses["total"],
         },
     }
 

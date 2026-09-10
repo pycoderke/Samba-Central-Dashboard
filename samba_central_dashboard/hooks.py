@@ -6,3 +6,4 @@ app_email = "support@cerp.co.ke"
 app_license = "Proprietary"
 
 after_install = "samba_central_dashboard.setup.after_install"
+after_migrate = "samba_central_dashboard.setup.after_migrate"

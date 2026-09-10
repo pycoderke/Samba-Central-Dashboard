@@ -1,6 +1,6 @@
 [project]
 name = "samba-central-dashboard"
-version = "0.1.6"
+version = "0.1.9"
 description = "Central multi-branch SambaPOS metrics dashboard for ERPNext"
 requires-python = ">=3.10"
 
